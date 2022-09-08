@@ -15,7 +15,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpRequest.BodyPublishers;
 import java.net.http.HttpResponse;
 
-import static it.jwisniowski.poc.springboot.http100continue.DemoController.Action.READ_BODY_RETURN_NO_BODY;
+import static it.jwisniowski.poc.springboot.http100continue.DemoController.Action.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -48,11 +48,43 @@ class DemoApplicationTest {
                 HttpResponse.BodyHandlers.ofString());
 
         assertThat(response)
-                .extracting(HttpResponse::statusCode, HttpResponse::body)
-                .containsExactly(201, "");
+                .extracting(HttpResponse::statusCode)
+                .isEqualTo(201);
 
-        assertThat(output.getOut())
+        assertThat(output)
                 .contains(expectedBodyContent);
+    }
+
+    @Test
+    void errors_does_not_read_body() throws IOException, InterruptedException {
+        String expectedBodyContent = "some body content";
+
+        HttpResponse<String> response = httpClient.send(
+                continueRequestBuilder()
+                        .setHeader("Action", ERROR_DON_NOT_READ_BODY.name())
+                        .POST(BodyPublishers.ofString(expectedBodyContent))
+                        .build(),
+                HttpResponse.BodyHandlers.ofString());
+
+        assertThat(response)
+                .extracting(HttpResponse::statusCode)
+                .isEqualTo(400);
+    }
+
+    @Test
+    void errors_after_starting_to_read_body() throws IOException, InterruptedException {
+        String expectedBodyContent = "some body content";
+
+        HttpResponse<String> response = httpClient.send(
+                continueRequestBuilder()
+                        .setHeader("Action", ERROR_AFTER_STARTING_TO_READ_BODY.name())
+                        .POST(BodyPublishers.ofString(expectedBodyContent))
+                        .build(),
+                HttpResponse.BodyHandlers.ofString());
+
+        assertThat(response)
+                .extracting(HttpResponse::statusCode)
+                .isEqualTo(400);
     }
 
     private HttpRequest.Builder continueRequestBuilder() {

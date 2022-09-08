@@ -17,7 +17,9 @@ import java.net.URI;
 @RequestMapping("api")
 public class DemoController {
     public enum Action {
-        READ_BODY_RETURN_NO_BODY
+        READ_BODY_RETURN_NO_BODY,
+        ERROR_DON_NOT_READ_BODY,
+        ERROR_AFTER_STARTING_TO_READ_BODY
     }
 
     private final Logger log = LoggerFactory.getLogger(getClass());
@@ -38,6 +40,11 @@ public class DemoController {
             log.info("Returning response");
 
             return ResponseEntity.created(URI.create("/entity/1")).build();
+        } else if (action == Action.ERROR_DON_NOT_READ_BODY) {
+            return ResponseEntity.badRequest().build();
+        } else if (action == Action.ERROR_AFTER_STARTING_TO_READ_BODY) {
+            httpServletRequest.getInputStream().read();
+            return ResponseEntity.badRequest().build();
         }
 
         throw new UnsupportedOperationException();
