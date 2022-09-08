@@ -16,21 +16,30 @@ import java.net.URI;
 @RestController
 @RequestMapping("api")
 public class DemoController {
+    public enum Action {
+        READ_BODY_RETURN_NO_BODY
+    }
+
     private final Logger log = LoggerFactory.getLogger(getClass());
 
-    @PostMapping(path = "continue-and-read-fully-no-response-body")
+    @PostMapping(path = "demo-resource")
     public ResponseEntity<?> continueAndReadFullyNoResponseBody(
-            @RequestHeader("Demo-Header") String demoHeaderValue,
+            @RequestHeader("Action") Action action,
             HttpServletRequest httpServletRequest) throws IOException {
-        log.info("Received a header. Header value is: {}", demoHeaderValue);
-        log.info("Reading the request body");
+        log.info("Received a header. Header value is: {}", action);
 
-        try (ServletInputStream sis = httpServletRequest.getInputStream()) {
-            log.info("Request body is: {}", new String(sis.readAllBytes()));
+        if (action == Action.READ_BODY_RETURN_NO_BODY) {
+            log.info("Reading the request body");
+
+            try (ServletInputStream sis = httpServletRequest.getInputStream()) {
+                log.info("Request body is: {}", new String(sis.readAllBytes()));
+            }
+
+            log.info("Returning response");
+
+            return ResponseEntity.created(URI.create("/entity/1")).build();
         }
 
-        log.info("Returning response");
-
-        return ResponseEntity.created(URI.create("/entity/1")).build();
+        throw new UnsupportedOperationException();
     }
 }

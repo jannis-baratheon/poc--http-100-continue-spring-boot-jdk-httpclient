@@ -14,8 +14,8 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpRequest.BodyPublishers;
 import java.net.http.HttpResponse;
-import java.nio.charset.StandardCharsets;
 
+import static it.jwisniowski.poc.springboot.http100continue.DemoController.Action.READ_BODY_RETURN_NO_BODY;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -37,15 +37,12 @@ class DemoApplicationTest {
     }
 
     @Test
-    void works_when_body_is_read_fully(CapturedOutput output) throws IOException, InterruptedException {
-        String expectedHeaderValue = "some header value";
+    void reads_body_returns_no_body(CapturedOutput output) throws IOException, InterruptedException {
         String expectedBodyContent = "some body content";
 
         HttpResponse<String> response = httpClient.send(
-                HttpRequest.newBuilder()
-                        .expectContinue(true)
-                        .setHeader("Demo-Header", expectedHeaderValue)
-                        .uri(getUri("continue-and-read-fully-no-response-body"))
+                continueRequestBuilder()
+                        .setHeader("Action", READ_BODY_RETURN_NO_BODY.name())
                         .POST(BodyPublishers.ofString(expectedBodyContent))
                         .build(),
                 HttpResponse.BodyHandlers.ofString());
@@ -55,11 +52,12 @@ class DemoApplicationTest {
                 .containsExactly(201, "");
 
         assertThat(output.getOut())
-                .contains(expectedHeaderValue)
                 .contains(expectedBodyContent);
     }
 
-    private URI getUri(String endpoint) {
-        return serverUri.resolve(endpoint);
+    private HttpRequest.Builder continueRequestBuilder() {
+        return HttpRequest.newBuilder()
+                .expectContinue(true)
+                .uri(serverUri.resolve("demo-resource"));
     }
 }
